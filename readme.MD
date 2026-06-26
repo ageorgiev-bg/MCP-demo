@@ -19,8 +19,8 @@ podman run -d \
   -e POSTGRES_PASSWORD=postgres \
   postgres:16
 
-# Check for exposed port of container
-ss -tlnp | grep 5432
+# Verify PostgreSQL & MCP server containers have exposed the necessary port
+ss -tlnp | grep -E '5432|8000'
 
 # Run MCP app on the same network
 podman run --name=MCP-srv -p 8000:8000 --network myapp-net --replace localhost/mcp-server:latest
