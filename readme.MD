@@ -23,8 +23,11 @@ podman run -d \
 ss -tlnp | grep -E '5432|8000'
 
 # Run MCP app on the same network
-podman run --name=MCP-srv -p 8000:8000 --network myapp-net --replace localhost/mcp-server:latest
-
+podman run --name=MCP-srv \
+-p 8000:8000 \
+--network myapp-net \
+--replace \
+localhost/mcp-server:latest
 ```
 
 ### Postgres DB Table Setup with data
