@@ -1,16 +1,15 @@
 ## Instructions
 
 ### Build MCP image
-\# Inside the Dockerfile directory use  
+\# Inside the Dockerfile directory build the container image  
 `docker build -t mcp-server .`
 
 ### Setup and bring up all local infrastructure
-
 ```bash
 # Create a shared network
 podman network create myapp-net
 
-# Run postgres on it
+# Run Postgres container it
 podman run -d \
   --name postgres \
   -p 5432:5432  \
@@ -19,18 +18,19 @@ podman run -d \
   -e POSTGRES_PASSWORD=postgres \
   postgres:16
 
-# Verify PostgreSQL & MCP server containers have exposed the necessary port
-ss -tlnp | grep -E '5432|8000'
-
-# Run MCP app on the same network
+# Run MCP server app on the same network
 podman run --name=MCP-srv \
 -p 8000:8000 \
 --network myapp-net \
 --replace \
 localhost/mcp-server:latest
+
+# Verify PostgreSQL & MCP server containers have exposed the necessary port for troubleshooting/management
+ss -tlnp | grep -E '5432|8000'
 ```
 
 ### Postgres DB Table Setup with data
+\# Connect and authN to PostgreSQL DB in order to create the test data (table) which will be queried by MCP server's tool
 `PGPASSWORD=postgres pgcli -h localhost -p 5432 -U postgres -d postgres`
 
 ```sql
@@ -45,6 +45,7 @@ INSERT INTO users (user_id) VALUES ('alex');
 ### MCP Server testing part
 
 ```bash
+# Get Session ID
 SESSION_ID=$(curl -s -X POST \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
@@ -54,6 +55,7 @@ SESSION_ID=$(curl -s -X POST \
 
 echo "Session ID: $SESSION_ID"
 
+# Confirm ready
 curl -s -X POST \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
@@ -61,6 +63,7 @@ curl -s -X POST \
   -d '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
   http://0.0.0.0:8000/mcp
 
+# Ask for available tools
 curl -s -X POST \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
@@ -68,6 +71,7 @@ curl -s -X POST \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
   http://0.0.0.0:8000/mcp | yq .data
 
+ # Use get_user_data tool available & pass args to it
  curl -s -X POST \
    -H "Content-Type: application/json" \
    -H "Accept: application/json, text/event-stream" \
